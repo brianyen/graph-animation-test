@@ -1,0 +1,156 @@
+<html>
+<p>Fun Chart!</p>
+<div id="display">
+    <div id="vis"></div>
+    <div id="insights">
+        <textarea id="ins">
+{
+    "colorBin": "quantize",
+    "columns": {
+        "x": "myX",
+        "y": "myY",
+        "extra": "myExtra"
+    },
+    "scheme": "set1",
+    "facetStyle": "wrap",
+    "size": {
+        "height": 300,
+        "width": 300
+    },
+    "chart": "scatterplot"
+}
+        </textarea>
+        <button onclick="updateInsights(true)">update</button>
+        <button onclick="animateInsights(true)">animate</button>
+        <button onclick="inverse()">inverse</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/vega@^5.30/build/vega.js" charset="utf-8"></script>
+<script src="https://unpkg.com/@msrvida/sanddance@^4/dist/umd/sanddance.js"></script>
+
+<script>
+let canvas = document.getElementById("vis");
+let insightInput = document.getElementById("ins");
+
+const { SandDance } = window;
+const viewer = new SandDance.Viewer(document.querySelector('#vis'), {
+    transitionDurations: {
+        scope: 1000,
+        legend: 1000,
+        mark: 1000
+    },
+    size: {
+        width: 1000,
+        height: 1000,
+    },
+    toolbar: false,
+    hideLegend: true,
+    hideLegendSettings: true,
+    theme: "dark"
+});
+
+SandDance.use(vega);
+
+const data = [
+    { myX: 0.5, myY: 0.1, myExtra: "abc" },
+    { myX: 0.2, myY: 1.1, myExtra: "abc" },
+    { myX: 0.9, myY: 2.3, myExtra: "def" },
+    { myX: 0.4, myY: 1.2, myExtra: "def" },
+    { myX: 1.6, myY: 1.2, myExtra: "def" },
+    { myX: 1.9, myY: 0.9, myExtra: "abc" },
+    { myX: 0.3, myY: 0.6, myExtra: "def" },
+    { myX: 0.6, myY: 0.5, myExtra: "abc" },
+    { myX: 1.1, myY: 1.8, myExtra: "abc" }
+];
+
+// Specify the chart by using an [Insight object](https://microsoft.github.io/SandDance/docs/sanddance/v4/interfaces/specs.Insight.html)
+var insight;
+
+function updateInsights(refreshInsights) {
+    if (refreshInsights) {
+        insight = JSON.parse(insightInput.value);
+    }
+
+    const columns = SandDance.util.getColumnsFromData(vega.inferTypes, data);
+    const specColumns = SandDance.specs.getSpecColumns(insight, columns);
+    const specViewOptions = {
+        colors: {
+            defaultCube: "steelblue",
+            axisLine: "#000",
+            axisText: "#000"
+        },
+        language: {
+            count: "Count"
+        },
+        maxLegends: 20,
+        tickSize: 10
+    };
+
+    const context = { specColumns, insight, specViewOptions };
+    const specResult = SandDance.specs.build(context, data);
+
+    if (specResult.errors) {
+        console.log(specResult.errors);
+    } else {
+        console.log(specResult.vegaSpec);
+    }
+
+    render(specResult.vegaSpec);
+}
+
+function render(spec) {
+    var runtime = vega.parse(spec);
+    var vegaView = new vega.View(runtime, { container: canvas });
+    return vegaView.runAsync();
+}
+
+function animateInsights(refreshInsights) {
+    if (refreshInsights) {
+        insight = JSON.parse(insightInput.value);
+    }
+
+    console.log(insight);
+    console.log(viewer);
+
+    viewer.render({ insight }, data);
+}
+
+function inverse() {
+    insight = JSON.parse(insightInput.value);
+    let tempX = insight.columns.x;
+    insight.columns.x = insight.columns.y;
+    insight.columns.y = tempX;
+    insightInput.value = JSON.stringify(insight, null, 4);
+    animateInsights(false);
+}
+</script>
+<style>
+textarea {
+    width: 100%;
+    height: 700px;
+}
+button {
+    width: auto;
+    height: 25px;
+}
+#display {
+    display: flex;
+}
+#ins {
+    margin: 5%;
+}
+#vis {
+    margin-left: 5%;
+    min-width: 60%;
+    height: 1000px;
+}
+.sanddance-panel {
+    display: none;
+}
+.sanddance-gl {
+    width: 100%;
+    height: 40%;
+}
+</style>
+</html>
