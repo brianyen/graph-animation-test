@@ -7,18 +7,33 @@
 {
     "colorBin": "quantize",
     "columns": {
-        "x": "myX",
-        "y": "myY",
-        "extra": "myExtra"
+        "x": "myY",
+        "y": "myX",
+        "color": "myExtra",
+        "z": "myExtra"
     },
-    "scheme": "set1",
+    "scheme": "redblue",
     "facetStyle": "wrap",
     "size": {
         "height": 300,
         "width": 300
     },
-    "chart": "scatterplot"
+    "chart": "scatterplot",
+    "view": "3d"
 }
+        </textarea>
+        <textarea id="data">
+{"data": [
+    { "myX": 0.5, "myY": 0.1, "myExtra": "abc" },
+    { "myX": 0.2, "myY": 1.1, "myExtra": "abc" },
+    { "myX": 0.9, "myY": 2.3, "myExtra": "def" },
+    { "myX": 0.4, "myY": 1.2, "myExtra": "def" },
+    { "myX": 1.6, "myY": 1.2, "myExtra": "def" },
+    { "myX": 1.9, "myY": 0.9, "myExtra": "abc" },
+    { "myX": 0.3, "myY": 0.6, "myExtra": "def" },
+    { "myX": 0.6, "myY": 0.5, "myExtra": "abc" },
+    { "myX": 1.1, "myY": 1.8, "myExtra": "abc" }
+]}
         </textarea>
         <button onclick="updateInsights(true)">update</button>
         <button onclick="animateInsights(true)">animate</button>
@@ -32,6 +47,7 @@
 <script>
 let canvas = document.getElementById("vis");
 let insightInput = document.getElementById("ins");
+let dataInput = document.getElementById("data");
 
 const { SandDance } = window;
 const viewer = new SandDance.Viewer(document.querySelector('#vis'), {
@@ -52,24 +68,13 @@ const viewer = new SandDance.Viewer(document.querySelector('#vis'), {
 
 SandDance.use(vega);
 
-const data = [
-    { myX: 0.5, myY: 0.1, myExtra: "abc" },
-    { myX: 0.2, myY: 1.1, myExtra: "abc" },
-    { myX: 0.9, myY: 2.3, myExtra: "def" },
-    { myX: 0.4, myY: 1.2, myExtra: "def" },
-    { myX: 1.6, myY: 1.2, myExtra: "def" },
-    { myX: 1.9, myY: 0.9, myExtra: "abc" },
-    { myX: 0.3, myY: 0.6, myExtra: "def" },
-    { myX: 0.6, myY: 0.5, myExtra: "abc" },
-    { myX: 1.1, myY: 1.8, myExtra: "abc" }
-];
-
-// Specify the chart by using an [Insight object](https://microsoft.github.io/SandDance/docs/sanddance/v4/interfaces/specs.Insight.html)
 var insight;
+var data;
 
-function updateInsights(refreshInsights) {
-    if (refreshInsights) {
+function updateInsights(refresh) {
+    if (refresh) {
         insight = JSON.parse(insightInput.value);
+        data = JSON.parse(dataInput.value);
     }
 
     const columns = SandDance.util.getColumnsFromData(vega.inferTypes, data);
@@ -105,13 +110,15 @@ function render(spec) {
     return vegaView.runAsync();
 }
 
-function animateInsights(refreshInsights) {
-    if (refreshInsights) {
+function animateInsights(refresh) {
+    if (refresh) {
         insight = JSON.parse(insightInput.value);
+        data = JSON.parse(dataInput.value)["data"];
     }
 
     console.log(insight);
     console.log(viewer);
+    console.log(data);
 
     viewer.render({ insight }, data);
 }
@@ -128,7 +135,7 @@ function inverse() {
 <style>
 textarea {
     width: 100%;
-    height: 700px;
+    height: 300px;
 }
 button {
     width: auto;
