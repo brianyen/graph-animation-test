@@ -36,18 +36,30 @@
 ]}
         </textarea>
         <button onclick="updateInsights(true)">update</button>
-        <button onclick="animateInsights(true)">animate</button>
+        <button onclick="animateInsights()">animate</button>
         <button onclick="inverse()">inverse</button>
+        <input type="file" id="fileInput" accept="csv">
+        <br>
+        <label for="refreshData">use manual input data?</label>
+        <input type="checkBox" id="refreshData">
+        <br>
+        <label for="refreshInsights">use manual input insights?</label>
+        <input type="checkBox" id="refreshInsights">
     </div>
 </div>
 
 <script src="https://unpkg.com/vega@^5.30/build/vega.js" charset="utf-8"></script>
 <script src="https://unpkg.com/@msrvida/sanddance@^4/dist/umd/sanddance.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 let canvas = document.getElementById("vis");
 let insightInput = document.getElementById("ins");
 let dataInput = document.getElementById("data");
+let fileInput = document.getElementById("fileInput");
+let refreshData = document.getElementById("refreshData");
+let refreshInsights = document.getElementById("refreshInsights");
+fileInput.addEventListener("change", handleFileAsync, false);
 
 const { SandDance } = window;
 const viewer = new SandDance.Viewer(document.querySelector('#vis'), {
@@ -68,8 +80,8 @@ const viewer = new SandDance.Viewer(document.querySelector('#vis'), {
 
 SandDance.use(vega);
 
-var insight;
-var data;
+var insight = JSON.parse(insightInput.value);
+var data = JSON.parse(dataInput.value)["data"];
 
 function updateInsights(refresh) {
     if (refresh) {
@@ -104,16 +116,66 @@ function updateInsights(refresh) {
     render(specResult.vegaSpec);
 }
 
+async function handleFileAsync(e) {
+    const file = e.target.files[0]
+    let parsedData;
+    
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const csvContent = e.target.result; 
+            const rows = csvContent.split('\n'); 
+            parsedData = rows.map(row => row.split(',')); 
+
+            processCSV(parsedData);
+        }
+
+        reader.readAsText(file);
+    } else {
+        console.log("no file given");
+        return;
+    }
+}
+
+function processCSV(parsedData) {
+    let keys = Object.keys(parsedData);
+
+    if (keys.length < 1) {
+        console.log("too short");
+        return;
+    }
+
+    const columnNames = parsedData[0];
+    data = []
+
+    for (i = 1; i < 100 ? i < keys.length : false; i++) {
+        tempObject = {}
+        for (j = 0; j < columnNames.length; j++) {
+            tempObject[columnNames[j]] = parsedData[i][j];
+        }
+        data.push(tempObject);
+    }
+
+    insight = JSON.parse(insightInput.value);
+    animateInsights();
+}
+
 function render(spec) {
     var runtime = vega.parse(spec);
     var vegaView = new vega.View(runtime, { container: canvas });
     return vegaView.runAsync();
 }
 
-function animateInsights(refresh) {
-    if (refresh) {
-        insight = JSON.parse(insightInput.value);
+function animateInsights() {
+    console.log("animating...")
+    if (refreshData.checked) {
+        console.log("data refreshed")
         data = JSON.parse(dataInput.value)["data"];
+    }
+    if (refreshInsights.checked) {
+        console.log("insight refreshed");
+        insight = JSON.parse(insightInput.value);
     }
 
     console.log(insight);
@@ -129,7 +191,7 @@ function inverse() {
     insight.columns.x = insight.columns.y;
     insight.columns.y = tempX;
     insightInput.value = JSON.stringify(insight, null, 4);
-    animateInsights(false);
+    animateInsights();
 }
 </script>
 <style>
