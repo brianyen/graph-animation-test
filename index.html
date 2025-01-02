@@ -151,7 +151,7 @@ function processCSV(parsedData) {
     for (i = 1; i < 10000 ? i < keys.length : false; i++) {
         tempObject = {}
         for (j = 0; j < columnNames.length; j++) {
-            if (j == 0 || j == 2) {
+            if (j == 0 || j == 2 || j == 6) {
                 parsedData[i][j] = parsedData[i][j].replace(/[^0-9]/g, '');
             }
             tempObject[columnNames[j]] = parsedData[i][j];
